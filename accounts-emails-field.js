@@ -19,7 +19,9 @@ var updateEmails = function(info){
         // NOTE: so far only for the service `google` it was found a field
         //       called `verified_email`. But it may be that new names 
         //       should be atted to better support all 3rd-party packages!
-        if (service.verified_email)
+        if (service_name === 'facebook')
+            verified = true; // Facebook doesn't permite the use of the account unless email is confirmed!
+        else if (service.verified_email)
             verified = true;
 
         // Look for the same email address inside current_emails
