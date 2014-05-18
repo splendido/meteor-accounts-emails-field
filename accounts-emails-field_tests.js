@@ -1,5 +1,5 @@
 // Copy of the function updateEmails otherwise not accessible from here!
-var updateEmails = function(info) {
+var updateEmails = function(info){
     // Picks up the user object
     var user = info.user;
     var toBeUpdated = false;
@@ -9,10 +9,23 @@ var updateEmails = function(info) {
     _.map(user.services, function(service, service_name) {
         if (service_name === 'resume' || service_name === 'email' || service_name === 'password')
             return;
+        // Picks up the email address from the service
+        // NOTE: differente sercives use different names for the email filed!!!
+        //       so far, `email` and `emailAddress` were found but it may be the
+        //       new names should be added to support all 3rd-party packages!
         var email = service.email || service.emailAddress;
         var verified = false;
-        if (service.verified_email)
+        // Tries to determine whether the 3rd-party email was verified
+        // NOTE: so far only for the service `google` it was found a field
+        //       called `verified_email`. But it may be that new names 
+        //       should be atted to better support all 3rd-party packages!
+        if (service_name === 'facebook')
+            verified = true; // Facebook doesn't permite the use of the account unless email is confirmed!
+        else if (service.verified_email)
             verified = true;
+
+        // Look for the same email address inside current_emails
+        // email_id === -1 means not found!
         var email_id = _.chain(current_emails)
             .map(function(e) {
                 return e.address === email;
@@ -20,6 +33,7 @@ var updateEmails = function(info) {
             .indexOf(true)
             .value();
         if (email_id === -1) {
+            // In case the email is not present, adds it to the array
             current_emails.push({
                 address: email,
                 verified: verified
@@ -27,6 +41,8 @@ var updateEmails = function(info) {
             toBeUpdated = true;
         } else {
             if (verified && !current_emails[email_id].verified) {
+                // If the email was found but its verified state should be promoted
+                // to true, updates the array element
                 toBeUpdated = true;
                 current_emails[email_id].verified = true;
             }
@@ -51,14 +67,15 @@ var updateEmails = function(info) {
         return _.indexOf(services_emails, email.address) == -1;
     });
     // Eventually checks whether to update the emails field
-    if (toBeUpdated)
-        Meteor.users.update({
-            _id: user._id
-        }, {
-            $set: {
-                emails: emails
-            }
-        });
+    //if (toBeUpdated)
+    //    Meteor.users.update({_id: user._id}, {$set: {emails: emails}});
+    Meteor.users.update({
+        _id: user._id
+    }, {
+        $set: {
+            registered_emails: emails
+        }
+    });
 };
 
 // User from accounts-password service with one non-verified email inside `emails` field
@@ -83,7 +100,7 @@ var user1 = {
             }]
         }
     }
-}
+};
 
 // User from accounts-password service with one verified email inside `emails` field
 var user2 = {
@@ -107,7 +124,7 @@ var user2 = {
             }]
         }
     }
-}
+};
 
 // User from 3rd-party service with no `emails` field
 var user3 = {
@@ -146,7 +163,7 @@ var user3 = {
             }]
         }
     }
-}
+};
 
 // User from accounts-password service with one non verified email inside `emails` field
 // plus a 3rd party service using the same email, but verified
@@ -184,7 +201,7 @@ var user4 = {
             }]
         }
     }
-}
+};
 
 // User from accounts-password service with one non verified email inside `emails` field
 // plus a 3rd party service using the another email which was changed after the last login
@@ -193,7 +210,7 @@ var user5 = {
         "address": "pippo@example.com",
         "verified": false
     }, {
-        "address": "pluto@example.com",  // old email
+        "address": "pluto@example.com", // old email
         "verified": false
     }, ],
     "profile": {},
@@ -202,7 +219,7 @@ var user5 = {
             "accessToken": "ya29.GAAaJ2JtofCXKEL364js7kzmQ",
             "expiresAt": 1400286604854,
             "id": "10489462794919007",
-            "email": "topolino@example.com",  // new email
+            "email": "topolino@example.com", // new email
             "verified_email": true,
             "name": "Mr. Pippo Pippo",
             "given_name": "Pippo",
@@ -225,7 +242,7 @@ var user5 = {
             }]
         }
     }
-}
+};
 
 
 Tinytest.add("emails-field - accounts-password user", function(test) {
@@ -237,27 +254,27 @@ Tinytest.add("emails-field - accounts-password user", function(test) {
     var expected_emails = [{
         address: "pippo@example.com",
         verified: false
-    }]
+    }];
     user = Meteor.users.findOne();
     updateEmails({
         user: user
     });
     user = Meteor.users.findOne();
-    test.isTrue(_.isEqual(user.emails, expected_emails));
+    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
 
     Meteor.users.remove({});
     Accounts.insertUserDoc({}, user2);
     // NO changes are expected into the `emails` field
-    var expected_emails = [{
+    expected_emails = [{
         address: "pippo@example.com",
         verified: true
-    }]
+    }];
     user = Meteor.users.findOne();
     updateEmails({
         user: user
     });
     user = Meteor.users.findOne();
-    test.isTrue(_.isEqual(user.emails, expected_emails));
+    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
 });
 
 Tinytest.add("emails-field - user from 3rd-party service", function(test) {
@@ -269,13 +286,13 @@ Tinytest.add("emails-field - user from 3rd-party service", function(test) {
     var expected_emails = [{
         address: "pippo@best.com",
         verified: false
-    }]
+    }];
     user = Meteor.users.findOne();
     updateEmails({
         user: user
     });
     user = Meteor.users.findOne();
-    test.isTrue(_.isEqual(user.emails, expected_emails));
+    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
 });
 
 Tinytest.add("emails-field - user from 3rd-party service with same (verified) password", function(test) {
@@ -287,13 +304,13 @@ Tinytest.add("emails-field - user from 3rd-party service with same (verified) pa
     var expected_emails = [{
         address: "pippo@example.com",
         verified: true
-    }]
+    }];
     user = Meteor.users.findOne();
     updateEmails({
         user: user
     });
     user = Meteor.users.findOne();
-    test.isTrue(_.isEqual(user.emails, expected_emails));
+    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
 });
 
 Tinytest.add("emails-field - user with accounts-password and updated password from 3rd-party service", function(test) {
@@ -308,11 +325,11 @@ Tinytest.add("emails-field - user with accounts-password and updated password fr
     }, {
         address: "topolino@example.com", // new email
         verified: true
-    }]
+    }];
     user = Meteor.users.findOne();
     updateEmails({
         user: user
     });
     user = Meteor.users.findOne();
-    test.isTrue(_.isEqual(user.emails, expected_emails));
+    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
 });
