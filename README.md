@@ -2,23 +2,23 @@
 accounts-emails-field
 =====================
 
-This is a Meteor package which maintains the `emails` array field inside the [user object](http://docs.meteor.com/#meteor_users) up to date with any 3rd-party account service email used by the user to login into the application.
+This is a Meteor package which maintains the `registered_emails` array field inside the [user object](http://docs.meteor.com/#meteor_users) up to date with any account service email used by the user to login into the application.
 
-It exploits the [`onLogin`](https://github.com/meteor/meteor/blob/b37fd2af7e028a474ee5aad25b27994fb2814bf1/packages/accounts-base/accounts_server.js#L50) hook from the Accounts object to check the user object after every successful login and possibly updates the content of its `emails` field.
+It exploits the [`onLogin`](https://github.com/meteor/meteor/blob/b37fd2af7e028a474ee5aad25b27994fb2814bf1/packages/accounts-base/accounts_server.js#L50) hook from the Accounts object to check the user object after every successful login and possibly updates the content of its `registered_emails` field.
 
 In particular:
 
-* email addresses used with 3rd-party services are added to the `emails` field
-* email added with `accounts-password` service which are still not validated but appear inside some 3rd-party service as validated are promotes to validated also inside the `emails` field.
-* emails which do not appear anymore inside some 3rd-party service are deleted from the `emails` field. In case the `accounts-password` service is used, the first email appearing inside the array, which is the one supposed to belong to the `accounts-password` service is anyway preserved!
+* email addresses used with 3rd-party services are added to the `registered_emails` field
+* email added with `accounts-password` service which are still not validated but appear inside some 3rd-party service as validated are promotes to validated also inside the `registered_emails` field.
+* emails which do not appear anymore inside some 3rd-party service are deleted from the `registered_emails` field. In case the `accounts-password` service is used, the first email appearing inside the array, which is the one supposed to belong to the `accounts-password` service is anyway preserved inside `registered_emails`!
 
 ### Advantages:
 
-Having an up-to-date `emails` field should permit to find a registered user by any of its email addresses with a simple function like this:
+Having an up-to-date `registered_emails` field should permit to find a registered user by any of its email addresses with a simple function like this:
 
 ```Javascript
 var findUserByEmail = function(emailAddress){
-    return Meteor.users.findOne({"emails.address": emailAddress});
+    return Meteor.users.findOne({"registered_emails.address": emailAddress});
 };
 ```
 
@@ -47,12 +47,12 @@ _**The major question mark is about the name used by each service to provide the
 Please try the following:
 
 ```Shell
-meteor create test-accounts-emails-filed && cd test-accounts-emails-filed
+meteor create test-accounts-emails-field && cd test-accounts-emails-field
 mrt add bootstrap-3
 mrt add accounts-ui-bootstrap-3
 meteor add service-configuration
 mrt add accounts-YOUR_PREFERRED_SERVICE
-mrt add accounts-emails-filed
+mrt add accounts-emails-field
 mrt install
 mkdir server
 touch server/accounts.js
@@ -76,9 +76,9 @@ from the same app folder but from a different terminal (while the testing app is
 db.users.find().pretty()
 ```
 
-Please try to confirm that the email you used to register to the service was added to the `emails` field and try to see if it is marked as verified or not.
+Please try to confirm that the email you used to register to the service was added to the `registered_emails` field and try to see if it is marked as verified or not.
 In case something is unexpected, please try to see under `user.services.YOUR_PREFERRED_SERVICE` which is the name for the email field (if any!) and whether there is another field stating the verified status of the email address (if any...).
 
 In any case, please comment/add an issue having the same name of the service with the test outcome.
 
-Big Tnx in advance to anyone willing to test `accounts-emails-filed`!!!
+Big Tnx in advance to anyone willing to test `accounts-emails-field`!!!
