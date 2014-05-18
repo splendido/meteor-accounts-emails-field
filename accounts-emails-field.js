@@ -65,10 +65,13 @@ var updateEmails = function(info){
         return _.indexOf(services_emails, email.address) == -1;
     });
     // Eventually checks whether to update the emails field
-    if (toBeUpdated)
-        Meteor.users.update({_id: user._id}, {$set: {emails: emails}});
+    //if (toBeUpdated)
+    //    Meteor.users.update({_id: user._id}, {$set: {emails: emails}});
+    Meteor.users.update({_id: user._id}, {$set: {registered_emails: emails}});
 };
 
+// Sets up an index on registered_emails
+Meteor.users._ensureIndex('registered_emails.address');
 
 // Register `updateEmails` function under the `onLogin` hook so to
 // check/update the `emails` field at every new login!
