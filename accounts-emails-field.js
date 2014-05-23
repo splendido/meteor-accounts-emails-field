@@ -75,6 +75,7 @@ var updateEmails = function(info) {
             registered_emails: emails
         }
     });
+    console.log('End of updateEmails');
 };
 
 // Sets up an index on registered_emails
