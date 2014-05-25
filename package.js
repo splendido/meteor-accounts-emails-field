@@ -9,7 +9,8 @@ Package.on_use(function(api, where) {
     ], ['server']);
 
     api.add_files([
-        'accounts-emails-field.js'
+        'accounts-emails-field.js',
+        'accounts-emails-field-on-login.js'
     ], ['server']);
 
     api.imply([

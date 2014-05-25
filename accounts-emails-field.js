@@ -1,4 +1,4 @@
-var updateEmails = function(info) {
+updateEmails = function(info) {
     // Picks up the user object
     var user = info.user;
     var toBeUpdated = false;
@@ -80,7 +80,3 @@ var updateEmails = function(info) {
 
 // Sets up an index on registered_emails
 Meteor.users._ensureIndex('registered_emails.address');
-
-// Register `updateEmails` function under the `onLogin` hook so to
-// check/update the `emails` field at every new login!
-Accounts.onLogin(updateEmails);
