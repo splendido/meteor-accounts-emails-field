@@ -75,6 +75,8 @@ updateEmails = function(info) {
             registered_emails: emails
         }
     });
+    // Updates also current user object to be later used during the same callback...
+    user.registered_emails = emails; 
 };
 
 // Sets up an index on registered_emails
