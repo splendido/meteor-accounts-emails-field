@@ -26,9 +26,7 @@ updateEmails = function(info) {
         // Look for the same email address inside current_emails
         // email_id === -1 means not found!
         var email_id = _.chain(current_emails)
-            .map(function(e) {
-                return e.address === email;
-            })
+            .map(function(e) {return e.address === email;})
             .indexOf(true)
             .value();
         if (email_id === -1) {
@@ -68,15 +66,9 @@ updateEmails = function(info) {
     // Eventually checks whether to update the emails field
     //if (toBeUpdated)
     //    Meteor.users.update({_id: user._id}, {$set: {emails: emails}});
-    Meteor.users.update({
-        _id: user._id
-    }, {
-        $set: {
-            registered_emails: emails
-        }
-    });
+    Meteor.users.update({_id: user._id}, {$set: {registered_emails: emails}});
     // Updates also current user object to be later used during the same callback...
-    user.registered_emails = emails; 
+    user.registered_emails = emails;
 };
 
 // Sets up an index on registered_emails
