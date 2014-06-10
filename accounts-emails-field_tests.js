@@ -1,3 +1,5 @@
+var whitelistedServices = ['facebook', 'linkedin'];
+
 // Copy of the function updateEmails otherwise not accessible from here!
 var updateEmails = function(info){
     // Picks up the user object
@@ -14,13 +16,18 @@ var updateEmails = function(info){
         //       so far, `email` and `emailAddress` were found but it may be the
         //       new names should be added to support all 3rd-party packages!
         var email = service.email || service.emailAddress;
+        if (!email)
+            // e.g. GitHub provides a null value in the field "email" in case the email
+            //      address is not verified!
+            return;
+
         var verified = false;
         // Tries to determine whether the 3rd-party email was verified
         // NOTE: so far only for the service `google` it was found a field
         //       called `verified_email`. But it may be that new names 
         //       should be atted to better support all 3rd-party packages!
-        if (service_name === 'facebook')
-            verified = true; // Facebook doesn't permite the use of the account unless email is confirmed!
+        if (_.indexOf(whitelistedServices, service_name) > -1)
+            verified = true;
         else if (service.verified_email)
             verified = true;
 
@@ -244,6 +251,18 @@ var user5 = {
     }
 };
 
+// GitHub login does not assure varified email!!!
+var user6 = {
+    "profile": {},
+    "services": {
+        "github" : {
+            "id" : 7829990,
+            "accessToken" : "a49d3c9aedb73b739bc8042c5fe9ce26b49e5a7e",
+            "email" : "maiemai@gmail.com",
+            "username" : "maiemai"
+        }
+    }
+};
 
 Tinytest.add("emails-field - accounts-password user", function(test) {
     var user;
@@ -285,7 +304,7 @@ Tinytest.add("emails-field - user from 3rd-party service", function(test) {
     // It is expected that the `emails` field be created adding the 3rd-party email
     var expected_emails = [{
         address: "pippo@best.com",
-        verified: false
+        verified: true
     }];
     user = Meteor.users.findOne();
     updateEmails({
@@ -325,6 +344,25 @@ Tinytest.add("emails-field - user with accounts-password and updated password fr
     }, {
         address: "topolino@example.com", // new email
         verified: true
+    }];
+    user = Meteor.users.findOne();
+    updateEmails({
+        user: user
+    });
+    user = Meteor.users.findOne();
+    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
+});
+
+
+Tinytest.add("emails-field - login with github: email not verified by default!", function(test) {
+    var user;
+
+    Meteor.users.remove({});
+    Accounts.insertUserDoc({}, user6);
+    // It is expected that the registered email is marked as non-verified!
+    var expected_emails = [{
+        address: "maiemai@gmail.com",
+        verified: false
     }];
     user = Meteor.users.findOne();
     updateEmails({
