@@ -1,89 +1,3 @@
-var whitelistedServices = ['facebook', 'linkedin'];
-
-// Copy of the function updateEmails otherwise not accessible from here!
-var updateEmails = function(info){
-    // Picks up the user object
-    var user = info.user;
-    var toBeUpdated = false;
-    // Picks up current emails field
-    var current_emails = user.emails || [];
-    // Updates or adds all emails found inside services
-    _.map(user.services, function(service, service_name) {
-        if (service_name === 'resume' || service_name === 'email' || service_name === 'password')
-            return;
-        // Picks up the email address from the service
-        // NOTE: differente sercives use different names for the email filed!!!
-        //       so far, `email` and `emailAddress` were found but it may be the
-        //       new names should be added to support all 3rd-party packages!
-        var email = service.email || service.emailAddress;
-        if (!email)
-            // e.g. GitHub provides a null value in the field "email" in case the email
-            //      address is not verified!
-            return;
-
-        var verified = false;
-        // Tries to determine whether the 3rd-party email was verified
-        // NOTE: so far only for the service `google` it was found a field
-        //       called `verified_email`. But it may be that new names 
-        //       should be atted to better support all 3rd-party packages!
-        if (_.indexOf(whitelistedServices, service_name) > -1)
-            verified = true;
-        else if (service.verified_email)
-            verified = true;
-
-        // Look for the same email address inside current_emails
-        // email_id === -1 means not found!
-        var email_id = _.chain(current_emails)
-            .map(function(e) {
-                return e.address === email;
-            })
-            .indexOf(true)
-            .value();
-        if (email_id === -1) {
-            // In case the email is not present, adds it to the array
-            current_emails.push({
-                address: email,
-                verified: verified
-            });
-            toBeUpdated = true;
-        } else {
-            if (verified && !current_emails[email_id].verified) {
-                // If the email was found but its verified state should be promoted
-                // to true, updates the array element
-                toBeUpdated = true;
-                current_emails[email_id].verified = true;
-            }
-        }
-    });
-    // Extracts current services emails
-    var services_emails = [];
-    if (user.services.password)
-    // If password is among services, adds the password email not to delete it...
-        services_emails.push(current_emails[0].address);
-    _.map(user.services, function(service, service_name) {
-        if (service_name === 'resume' || service_name === 'email' || service_name === 'password')
-            return;
-        var email = service.email || service.emailAddress;
-        if (email && _.indexOf(services_emails, email) == -1)
-            services_emails.push(email);
-    });
-    // Keeps only emails from the current emails field which
-    // also appears inside services_emails
-    // ...some email address might have 
-    var emails = _.reject(current_emails, function(email) {
-        return _.indexOf(services_emails, email.address) == -1;
-    });
-    // Eventually checks whether to update the emails field
-    //if (toBeUpdated)
-    //    Meteor.users.update({_id: user._id}, {$set: {emails: emails}});
-    Meteor.users.update({
-        _id: user._id
-    }, {
-        $set: {
-            registered_emails: emails
-        }
-    });
-};
 
 // User from accounts-password service with one non-verified email inside `emails` field
 var user1 = {
@@ -133,6 +47,38 @@ var user2 = {
     }
 };
 
+Tinytest.add("emails-field - accounts-password user", function(test) {
+    var user;
+    Meteor.users.remove({});
+    Accounts.insertUserDoc({}, user1);
+    // NO changes are expected into the `emails` field and `registered_emails`
+    // should result equal to `emails`
+    var expected_registered_emails = [{
+        address: "pippo@example.com",
+        verified: false
+    }];
+    user = Meteor.users.findOne();
+    updateEmails({user: user});
+    user = Meteor.users.findOne();
+    test.isTrue(_.isEqual(user.emails, expected_registered_emails));
+    test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
+
+    Meteor.users.remove({});
+    Accounts.insertUserDoc({}, user2);
+    // NO changes are expected into the `emails` field and `registered_emails`
+    // should result equal to `emails`
+    expected_registered_emails = [{
+        address: "pippo@example.com",
+        verified: true
+    }];
+    user = Meteor.users.findOne();
+    updateEmails({user: user});
+    user = Meteor.users.findOne();
+    test.isTrue(_.isEqual(user.emails, expected_registered_emails));
+    test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
+});
+
+
 // User from 3rd-party service with no `emails` field
 var user3 = {
     "profile": {
@@ -172,8 +118,26 @@ var user3 = {
     }
 };
 
+Tinytest.add("emails-field - user from 3rd-party service", function(test) {
+    var user;
+    Meteor.users.remove({});
+    Accounts.insertUserDoc({}, user3);
+    // It is expected that the `registered_emails` field be created with the 3rd-party email
+    var expected_registered_emails = [{
+        address: "pippo@best.com",
+        verified: true
+    }];
+    user = Meteor.users.findOne();
+    updateEmails({user: user});
+    user = Meteor.users.findOne();
+    test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
+    // No field `emails` should be created!
+    test.isUndefined(user.emails);
+});
+
+
 // User from accounts-password service with one non verified email inside `emails` field
-// plus a 3rd party service using the same email, but verified
+// plus a 3rd-party service using the same email, but verified
 var user4 = {
     "emails": [{
         "address": "pippo@example.com",
@@ -210,10 +174,36 @@ var user4 = {
     }
 };
 
+Tinytest.add("emails-field - user from 3rd-party service with same (verified) email", function(test) {
+    var user;
+    Meteor.users.remove({});
+    Accounts.insertUserDoc({}, user4);
+    // It is expected that email inside `emails` remains unchanged but
+    // its verified status changes to true inside `registered_emails`
+    var emails = [{
+        address: "pippo@example.com",
+        verified: false
+    }];
+    var expected_registered_emails = [{
+        address: "pippo@example.com",
+        verified: true
+    }];
+    user = Meteor.users.findOne();
+    updateEmails({user: user});
+    user = Meteor.users.findOne();
+    test.isTrue(_.isEqual(user.emails, emails));
+    test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
+});
+
+
 // User from accounts-password service with one non verified email inside `emails` field
-// plus a 3rd party service using the another email which was changed after the last login
+// plus a 3rd-party service using another email which was changed after the last login
 var user5 = {
     "emails": [{
+        "address": "pippo@example.com",
+        "verified": false
+    }],
+    "registered_emails": [{
         "address": "pippo@example.com",
         "verified": false
     }, {
@@ -251,7 +241,28 @@ var user5 = {
     }
 };
 
-// GitHub login does not assure varified email!!!
+Tinytest.add("emails-field - user with accounts-password and updated password from 3rd-party service", function(test) {
+    var user;
+    Meteor.users.remove({});
+    Accounts.insertUserDoc({}, user5);
+    // It is expected that 3rd-party email inside `registered_emails` be updated to the new address
+    var expected_registered_emails = [{
+        address: "pippo@example.com",
+        verified: false
+    }, {
+        address: "topolino@example.com", // new email
+        verified: true
+    }];
+    user = Meteor.users.findOne();
+    console.dir(user.registered_emails);
+    updateEmails({user: user});
+    user = Meteor.users.findOne();
+    console.dir(user.registered_emails);
+    test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
+});
+
+
+// GitHub login does not assure verified email!!!
 var user6 = {
     "profile": {},
     "services": {
@@ -264,110 +275,59 @@ var user6 = {
     }
 };
 
-Tinytest.add("emails-field - accounts-password user", function(test) {
+Tinytest.add("emails-field - login with github: email not verified by default!", function(test) {
     var user;
-
     Meteor.users.remove({});
-    Accounts.insertUserDoc({}, user1);
-    // NO changes are expected into the `emails` field
-    var expected_emails = [{
-        address: "pippo@example.com",
+    Accounts.insertUserDoc({}, user6);
+    // It is expected that the registered email is marked as non-verified!
+    var expected_registered_emails = [{
+        address: "maiemai@gmail.com",
         verified: false
     }];
     user = Meteor.users.findOne();
-    updateEmails({
-        user: user
-    });
+    updateEmails({user: user});
     user = Meteor.users.findOne();
-    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
-
-    Meteor.users.remove({});
-    Accounts.insertUserDoc({}, user2);
-    // NO changes are expected into the `emails` field
-    expected_emails = [{
-        address: "pippo@example.com",
-        verified: true
-    }];
-    user = Meteor.users.findOne();
-    updateEmails({
-        user: user
-    });
-    user = Meteor.users.findOne();
-    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
+    test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
 });
 
-Tinytest.add("emails-field - user from 3rd-party service", function(test) {
+
+// Twitter provides no email!!!
+var user7 = {
+    "profile": {},
+    "services": {
+        "twitter" : {
+            "id" : 7829990,
+            "accessToken" : "a49d3c9aedb73b739bc8042c5fe9ce26b49e5a7e",
+        }
+    }
+};
+
+Tinytest.add("emails-field - no email addresses!", function(test) {
     var user;
-
     Meteor.users.remove({});
-    Accounts.insertUserDoc({}, user3);
-    // It is expected that the `emails` field be created adding the 3rd-party email
-    var expected_emails = [{
-        address: "pippo@best.com",
-        verified: true
-    }];
+    // Users 7 uses twitter as the login service (which provides no email field...)
+    Accounts.insertUserDoc({}, user7);
+    // It is expected that the registered email is not defined!
     user = Meteor.users.findOne();
-    updateEmails({
-        user: user
-    });
+    updateEmails({user: user});
     user = Meteor.users.findOne();
-    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
-});
+    test.isUndefined(user.emails);
+    test.isUndefined(user.registered_emails);
 
-Tinytest.add("emails-field - user from 3rd-party service with same (verified) password", function(test) {
-    var user;
-
-    Meteor.users.remove({});
-    Accounts.insertUserDoc({}, user4);
-    // It is expected that email inside `emails` remains but its verified status changes to true
-    var expected_emails = [{
-        address: "pippo@example.com",
-        verified: true
-    }];
-    user = Meteor.users.findOne();
-    updateEmails({
-        user: user
-    });
-    user = Meteor.users.findOne();
-    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
-});
-
-Tinytest.add("emails-field - user with accounts-password and updated password from 3rd-party service", function(test) {
-    var user;
-
-    Meteor.users.remove({});
-    Accounts.insertUserDoc({}, user5);
-    // It is expected that 3rd-party email inside `emails` be updated to the new address
-    var expected_emails = [{
+    // Checks `registered_emails` be removed after update
+    var registered_emails = [{
         address: "pippo@example.com",
         verified: false
     }, {
         address: "topolino@example.com", // new email
         verified: true
     }];
-    user = Meteor.users.findOne();
-    updateEmails({
-        user: user
-    });
-    user = Meteor.users.findOne();
-    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
-});
+    Meteor.users.update({_id: user._id}, {$set: {registered_emails: registered_emails}});
 
-
-Tinytest.add("emails-field - login with github: email not verified by default!", function(test) {
-    var user;
-
-    Meteor.users.remove({});
-    Accounts.insertUserDoc({}, user6);
-    // It is expected that the registered email is marked as non-verified!
-    var expected_emails = [{
-        address: "maiemai@gmail.com",
-        verified: false
-    }];
+    // It is expected that the registered email is not defined!
     user = Meteor.users.findOne();
-    updateEmails({
-        user: user
-    });
+    updateEmails({user: user});
     user = Meteor.users.findOne();
-    test.isTrue(_.isEqual(user.registered_emails, expected_emails));
+    test.isUndefined(user.emails);
+    test.isUndefined(user.registered_emails);
 });

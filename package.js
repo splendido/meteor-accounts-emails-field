@@ -1,5 +1,5 @@
 Package.describe({
-    summary: "This package maintains the `emails` array field inside the user object up to date with any 3rd-party account service email used by the user to login into the application."
+    summary: "This package maintains the `registered_emails` array field inside the user object up to date with any 3rd-party account service email used by the user to login into the application."
 });
 
 Package.on_use(function(api, where) {
@@ -26,6 +26,7 @@ Package.on_test(function(api) {
         'underscore'
     ], ['server']);
     api.add_files([
+        'accounts-emails-field.js',
         'accounts-emails-field_tests.js'
     ], ['server']);
 });
