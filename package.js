@@ -9,8 +9,8 @@ Package.on_use(function(api, where) {
     ], ['server']);
 
     api.add_files([
-        'accounts-emails-field.js',
-        'accounts-emails-field-on-login.js'
+        'lib/accounts-emails-field.js',
+        'lib/accounts-emails-field-on-login.js'
     ], ['server']);
 
     api.imply([
@@ -26,7 +26,7 @@ Package.on_test(function(api) {
         'underscore'
     ], ['server']);
     api.add_files([
-        'accounts-emails-field.js',
-        'accounts-emails-field_tests.js'
+        'lib/accounts-emails-field.js',
+        'tests/accounts-emails-field_tests.js'
     ], ['server']);
 });

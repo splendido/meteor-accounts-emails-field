@@ -254,10 +254,8 @@ Tinytest.add("emails-field - user with accounts-password and updated password fr
         verified: true
     }];
     user = Meteor.users.findOne();
-    console.dir(user.registered_emails);
     updateEmails({user: user});
     user = Meteor.users.findOne();
-    console.dir(user.registered_emails);
     test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
 });
 
