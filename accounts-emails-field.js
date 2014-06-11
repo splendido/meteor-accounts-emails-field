@@ -26,12 +26,21 @@ var whitelistedServices = ['facebook', 'linkedin'];
 // tested and verified on 2014/06/08
 // (see issue #1 at https://github.com/splendido/meteor-accounts-emails-field/issues/1 )
 
+// Twitter
+// You never get an email field!!!
+// The access is granted even without verifying the provided email address!
+
 updateEmails = function(info) {
     // Picks up the user object
     var user = info.user;
-    var toBeUpdated = false;
-    // Picks up current emails field
-    var current_emails = user.emails || [];
+    // creates an object with addresses as keys and verification status as values
+    var emails = {};
+
+    // Picks up all email addresses inside 'emails' field
+    _.each(user.emails || [], function(email) {
+       emails[email.address] = emails[email.address] || email.verified;
+    });
+
     // Updates or adds all emails found inside services
     _.map(user.services, function(service, service_name) {
         if (service_name === 'resume' || service_name === 'email' || service_name === 'password')
@@ -56,52 +65,29 @@ updateEmails = function(info) {
         else if (service.verified_email)
             verified = true;
 
-        // Look for the same email address inside current_emails
-        // email_id === -1 means not found!
-        var email_id = _.chain(current_emails)
-            .map(function(e) {return e.address === email;})
-            .indexOf(true)
-            .value();
-        if (email_id === -1) {
-            // In case the email is not present, adds it to the array
-            current_emails.push({
-                address: email,
-                verified: verified
-            });
-            toBeUpdated = true;
-        } else {
-            if (verified && !current_emails[email_id].verified) {
-                // If the email was found but its verified state should be promoted
-                // to true, updates the array element
-                toBeUpdated = true;
-                current_emails[email_id].verified = true;
-            }
-        }
+        emails[email] = emails[email] || verified;
     });
-    // Extracts current services emails
-    var services_emails = [];
-    if (user.services.password)
-    // If password is among services, adds the password email not to delete it...
-        services_emails.push(current_emails[0].address);
-    _.map(user.services, function(service, service_name) {
-        if (service_name === 'resume' || service_name === 'email' || service_name === 'password')
-            return;
-        var email = service.email || service.emailAddress;
-        if (email && _.indexOf(services_emails, email) == -1)
-            services_emails.push(email);
+
+    // transforms emails back to [{address: addr1, verified: bool}, {address: addr2, verified: bool}, ...]
+    var registered_emails = _.map(emails, function(verified, address){
+        return {address: address, verified: verified};
     });
-    // Keeps only emails from the current emails field which
-    // also appears inside services_emails
-    // ...some email address might have 
-    var emails = _.reject(current_emails, function(email) {
-        return _.indexOf(services_emails, email.address) == -1;
-    });
-    // Eventually checks whether to update the emails field
-    //if (toBeUpdated)
-    //    Meteor.users.update({_id: user._id}, {$set: {emails: emails}});
-    Meteor.users.update({_id: user._id}, {$set: {registered_emails: emails}});
-    // Updates also current user object to be later used during the same callback...
-    user.registered_emails = emails;
+
+    // In case we have at least 1 email
+    if (registered_emails.length){
+        // Updates the registered_emails field
+        Meteor.users.update({_id: user._id}, {$set: {registered_emails: registered_emails}});
+        // Updates also current user object to be possibly used later
+        // after the function returns...
+        user.registered_emails = registered_emails;
+    }
+    else{
+        // Removes the registered_emails field
+        Meteor.users.update({_id: user._id}, {$unset: {registered_emails: ""}});
+        // Updates also current user object to be possibly used later
+        // after the function returns...
+        delete user.registered_emails;
+    }
 };
 
 // Sets up an index on registered_emails
