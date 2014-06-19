@@ -3,7 +3,7 @@
     "description": "This package maintains the `registered_emails` array field inside the user object up to date with any 3rd-party account service email used by the user to login into the application.",
     "homepage": "https://github.com/splendido/meteor-accounts-emails-field",
     "author": "Luca Mussi <ing.luca.mussi@gmail.com> (https://github.com/splendido)",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "git": "https://github.com/splendido/meteor-accounts-emails-field.git",
     "packages": {}
 }
