@@ -42,6 +42,16 @@ Nothing to do... just install it and you're ready to go!
 In particular it would be very useful to test the package with as many accounts services as possible to confirm it is correctly functioning.
 _**The major question mark is about the name used by each service to provide the email address**_ (so far `email` and `emailAddressed` were observed) and _**the presence of a field telling whether the same address was verified or not**_ (so far only for accounts-google a field called `verified_email` was found).
 
+#### Already Tested Services
+
+|  service  | let non-verified in |  email field  | email verified field |
+| :-------- | :-----------------: | :-----------: | :------------------: |
+| twitter   |          X          |               |                      |
+| facebook  |                     |       X       |                      |
+| google    |          X          |       X       |           X          |
+| github    |          X          | (may be null) |                      |
+| linkedin  |                     |       X       |                      |
+
 #### Instructions for testers
 
 Please try the following:
