@@ -1,5 +1,8 @@
 Package.describe({
-    summary: "This package maintains the `registered_emails` array field inside the user object up to date with any 3rd-party account service email used by the user to login into the application."
+    summary: "Adds the `registered_emails` field to the user obj containing 3rd-party account service emails.",
+    name: "splendido:accounts-emails-field",
+    version: "1.0.3",
+    git: "https://github.com/splendido/meteor-accounts-emails-field.git",
 });
 
 Package.on_use(function(api, where) {
@@ -19,7 +22,7 @@ Package.on_use(function(api, where) {
 });
 
 Package.on_test(function(api) {
-    api.use('accounts-emails-field');
+    api.use('splendido:accounts-emails-field');
     api.use([
         'tinytest',
         'test-helpers',
