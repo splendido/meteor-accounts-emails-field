@@ -7,8 +7,8 @@ Package.describe({
 
 Package.on_use(function(api, where) {
     api.use([
-        'accounts-base',
-        'underscore'
+        'accounts-base@1.2.0',
+        'underscore@1.0.3'
     ], ['server']);
 
     api.add_files([
