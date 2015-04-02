@@ -329,3 +329,49 @@ Tinytest.add("emails-field - no email addresses!", function(test) {
     test.isUndefined(user.emails);
     test.isUndefined(user.registered_emails);
 });
+
+
+
+// Meteor login has arrays of emails
+var user8 = {
+    "profile": {},
+    "services": {
+        "meteor-developer" : {
+          "accessToken" : "iR2sZihFeZ5drH3QT",
+          "expiresAt" : NaN,
+          "username" : "example_user",
+          "emails" : [
+              {
+                  "address" : "user@example.com",
+                  "primary" : true,
+                  "verified" : true
+              },
+              {
+                  "address" : "user@another.com",
+                  "primary" : false,
+                  "verified" : false
+              }
+          ],
+          "id" : "acgHB2qTSZZueAdGG"
+      },
+    }
+};
+
+Tinytest.add("emails-field - login with meteor: multiple emails", function(test) {
+    var user;
+    Meteor.users.remove({});
+    Accounts.insertUserDoc({}, user8);
+    // It is expected that the registered email is marked as non-verified!
+    var expected_registered_emails = [{
+        address: "user@example.com",
+        verified: true
+    },
+    {
+        address: "user@another.com",
+        verified: false
+    }];
+    user = Meteor.users.findOne();
+    updateEmails({user: user});
+    user = Meteor.users.findOne();
+    test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
+});
