@@ -5,31 +5,36 @@ Package.describe({
     git: "https://github.com/splendido/meteor-accounts-emails-field.git",
 });
 
-Package.on_use(function(api, where) {
+Package.onUse(function(api, where) {
     api.use([
         'accounts-base@1.2.0',
         'underscore@1.0.3'
     ], ['server']);
 
-    api.add_files([
+    api.imply([
+        'accounts-base',
+    ], ['server']);
+
+    api.addFiles([
         'lib/accounts-emails-field.js',
         'lib/accounts-emails-field-on-login.js'
     ], ['server']);
 
-    api.imply([
-        'accounts-base',
+    api.export([
+      'AccountsEmailsField'
     ], ['server']);
 });
 
-Package.on_test(function(api) {
+Package.onTest(function(api) {
     api.use('splendido:accounts-emails-field');
+
     api.use([
         'tinytest',
         'test-helpers',
         'underscore'
     ], ['server']);
-    api.add_files([
-        'lib/accounts-emails-field.js',
+
+    api.addFiles([
         'tests/accounts-emails-field_tests.js'
     ], ['server']);
 });

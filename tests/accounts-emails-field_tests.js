@@ -58,7 +58,7 @@ Tinytest.add("emails-field - accounts-password user", function(test) {
         verified: false
     }];
     user = Meteor.users.findOne();
-    updateEmails({user: user});
+    AccountsEmailsField.updateEmails({user: user});
     user = Meteor.users.findOne();
     test.isTrue(_.isEqual(user.emails, expected_registered_emails));
     test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
@@ -72,7 +72,7 @@ Tinytest.add("emails-field - accounts-password user", function(test) {
         verified: true
     }];
     user = Meteor.users.findOne();
-    updateEmails({user: user});
+    AccountsEmailsField.updateEmails({user: user});
     user = Meteor.users.findOne();
     test.isTrue(_.isEqual(user.emails, expected_registered_emails));
     test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
@@ -128,7 +128,7 @@ Tinytest.add("emails-field - user from 3rd-party service", function(test) {
         verified: true
     }];
     user = Meteor.users.findOne();
-    updateEmails({user: user});
+    AccountsEmailsField.updateEmails({user: user});
     user = Meteor.users.findOne();
     test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
     // No field `emails` should be created!
@@ -189,7 +189,7 @@ Tinytest.add("emails-field - user from 3rd-party service with same (verified) em
         verified: true
     }];
     user = Meteor.users.findOne();
-    updateEmails({user: user});
+    AccountsEmailsField.updateEmails({user: user});
     user = Meteor.users.findOne();
     test.isTrue(_.isEqual(user.emails, emails));
     test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
@@ -254,7 +254,7 @@ Tinytest.add("emails-field - user with accounts-password and updated password fr
         verified: true
     }];
     user = Meteor.users.findOne();
-    updateEmails({user: user});
+    AccountsEmailsField.updateEmails({user: user});
     user = Meteor.users.findOne();
     test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
 });
@@ -283,7 +283,7 @@ Tinytest.add("emails-field - login with github: email not verified by default!",
         verified: false
     }];
     user = Meteor.users.findOne();
-    updateEmails({user: user});
+    AccountsEmailsField.updateEmails({user: user});
     user = Meteor.users.findOne();
     test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
 });
@@ -307,7 +307,7 @@ Tinytest.add("emails-field - no email addresses!", function(test) {
     Accounts.insertUserDoc({}, user7);
     // It is expected that the registered email is not defined!
     user = Meteor.users.findOne();
-    updateEmails({user: user});
+    AccountsEmailsField.updateEmails({user: user});
     user = Meteor.users.findOne();
     test.isUndefined(user.emails);
     test.isUndefined(user.registered_emails);
@@ -324,7 +324,7 @@ Tinytest.add("emails-field - no email addresses!", function(test) {
 
     // It is expected that the registered email is not defined!
     user = Meteor.users.findOne();
-    updateEmails({user: user});
+    AccountsEmailsField.updateEmails({user: user});
     user = Meteor.users.findOne();
     test.isUndefined(user.emails);
     test.isUndefined(user.registered_emails);
@@ -334,7 +334,9 @@ Tinytest.add("emails-field - no email addresses!", function(test) {
 
 // Meteor login has arrays of emails
 var user8 = {
-    "profile": {},
+    "profile": {
+      "username": "meteorUser",
+    },
     "services": {
         "meteor-developer" : {
           "accessToken" : "iR2sZihFeZ5drH3QT",
@@ -371,7 +373,47 @@ Tinytest.add("emails-field - login with meteor: multiple emails", function(test)
         verified: false
     }];
     user = Meteor.users.findOne();
-    updateEmails({user: user});
+    AccountsEmailsField.updateEmails({user: user});
     user = Meteor.users.findOne();
     test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails));
+});
+
+Tinytest.add("emails-field - updateAllUsersEmails", function(test) {
+    Meteor.users.remove({});
+
+    Accounts.insertUserDoc({}, user1);
+    Accounts.insertUserDoc({}, user3);
+    Accounts.insertUserDoc({}, user8);
+    var expected_registered_emails1 = [{
+      address: "pippo@example.com",
+      verified: false
+    }];
+    var expected_registered_emails3 = [{
+      address: "pippo@best.com",
+      verified: true
+    }];
+    var expected_registered_emails8 = [{
+        address: "user@example.com",
+        verified: true
+    },
+    {
+        address: "user@another.com",
+        verified: false
+    }];
+
+    AccountsEmailsField.updateAllUsersEmails();
+
+    var user;
+
+    // Verify that user1 was correctly updated
+    user = Meteor.users.findOne({"emails.address": "pippo@example.com"});
+    test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails1));
+
+    // Verify that user3 was correctly updated
+    user = Meteor.users.findOne({"profile.headline": "Super Pippo"});
+    test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails3));
+
+    // Verify that user8 was correctly updated
+    user = Meteor.users.findOne({"profile.username": "meteorUser"});
+    test.isTrue(_.isEqual(user.registered_emails, expected_registered_emails8));
 });
