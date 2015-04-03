@@ -5,7 +5,7 @@ Package.describe({
 	summary: "Adds to the user obj a `registered_emails` field " +
 		"containing 3rd-party account service emails.",
 	name: "splendido:accounts-emails-field",
-	version: "1.1.0",
+	version: "1.2.0",
 	git: "https://github.com/splendido/meteor-accounts-emails-field.git",
 });
 
