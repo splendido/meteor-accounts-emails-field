@@ -35,6 +35,26 @@ mrt add accounts-emails-field
 
 Nothing to do... just install it and you're ready to go!
 
+### Advanced API
+
+The `accounts-emails-field` exports an `AccountsEmailsField` object which in
+turn makes available the following functions on the server only:
+
+* `AccountsEmailsField.getEmailsFromService(serviceName, serviceObj)`:
+    internally used to extract email informations from OAuth service objects to
+    be found into the user object within the `services` field.
+
+* `AccountsEmailsField.updateAllUsersEmails()`:
+    handy function to update the `registered_emails` field for all known users
+    at once. Possibly useful for initial database update in case the packge is
+    added to an already existing application.
+
+* `AccountsEmailsField.updateEmails({user: user})`:
+    internally used to create/update the `registered_emails` field of a particular
+    user object. Its signature is designed to match the one required for callbacks
+    to be used with [Accounts.onLogin](https://docs.meteor.com/#/full/accounts_onlogin)
+    (because it's actually used this way...).
+
 ### WIP
 
 **This project is still Work In Progress**: any comments, suggestions, testing efforts, and PRs are very very welcome. Please use the [repo](https://github.com/splendido/meteor-accounts-emails-field) page for issues, discussions, etc.
