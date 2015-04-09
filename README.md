@@ -35,6 +35,18 @@ mrt add accounts-emails-field
 
 Nothing to do... just install it and you're ready to go!
 
+The `registered_emails` field that is automatically added to `Meteor.users` has the same format than the built-in [`emails`](http://docs.meteor.com/#/full/meteor_users) field: 
+```javascript
+registered_emails: [
+    { address: "cool@example.com", verified: true },
+    { address: "another@different.com", verified: false }
+  ],
+```
+If you use [aldeed:collection2](https://github.com/aldeed/meteor-collection2#attach-a-schema-to-meteorusers) on `Meteor.users`, you need to add the following field to your schema or you will get a collection2 exception each time a user logs in:
+```javascript
+registered_emails: { type: [Object], blackbox: true, optional: true }
+```
+
 ### Advanced API
 
 The `accounts-emails-field` exports an `AccountsEmailsField` object which in
