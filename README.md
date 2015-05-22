@@ -35,7 +35,7 @@ mrt add accounts-emails-field
 
 Nothing to do... just install it and you're ready to go!
 
-The `registered_emails` field that is automatically added to `Meteor.users` has the same format than the built-in [`emails`](http://docs.meteor.com/#/full/meteor_users) field: 
+The `registered_emails` field that is automatically added to `Meteor.users` has the same format than the built-in [`emails`](http://docs.meteor.com/#/full/meteor_users) field:
 ```javascript
 registered_emails: [
     { address: "cool@example.com", verified: true },
@@ -83,6 +83,9 @@ _**The major question mark is about the name used by each service to provide the
 | google    |          X          |       X       |           X          |
 | github    |          X          | (may be null) |                      |
 | linkedin  |                     |       X       |                      |
+
+See also [these lines](https://github.com/splendido/meteor-accounts-emails-field/blob/master/lib/accounts-emails-field.js#L13-69)
+for more details.
 
 #### Instructions for testers
 
