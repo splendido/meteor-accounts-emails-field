@@ -75,7 +75,7 @@ Accounts.onLogin(function (info) {
 	if (! info.user)
 		return;
 
-	// Get the user, including the registered_emails field added by the "meteor-accounts-emails-field"
+	// Get the user, including the registered_emails field added by the "splendido:accounts-emails-field"
 	// package. We cannot rely on info.user here, because modifications to the info object are not 
 	// propagated through onLogin callbacks (so info.user.registered_emails might be inexistent or out 
 	// of date)
