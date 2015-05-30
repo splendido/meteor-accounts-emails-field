@@ -4,7 +4,7 @@ accounts-emails-field
 
 This is a Meteor package which maintains the `registered_emails` array field inside the [user object](http://docs.meteor.com/#meteor_users) up to date with any account service email used by the user to login into the application.
 
-It exploits the [`onLogin`](https://github.com/meteor/meteor/blob/b37fd2af7e028a474ee5aad25b27994fb2814bf1/packages/accounts-base/accounts_server.js#L50) hook from the Accounts object to check the user object after every successful login and possibly updates the content of its `registered_emails` field.
+It exploits the [`onLogin`](http://docs.meteor.com/#/full/accounts_onlogin) hook from the Accounts object to check the user object after every successful login and possibly updates the content of its `registered_emails` field.
 
 In particular:
 
@@ -66,6 +66,25 @@ turn makes available the following functions on the server only:
     user object. Its signature is designed to match the one required for callbacks
     to be used with [Accounts.onLogin](https://docs.meteor.com/#/full/accounts_onlogin)
     (because it's actually used this way...).
+
+If you need to track changes in the `registered_emails` field, declare your own [`onLogin`](http://docs.meteor.com/#/full/accounts_onlogin) hook. It will be called after the one set by `accounts-emails-field` and will allow you to update whatever data depending on `registered_emails`:
+
+```javascript
+Accounts.onLogin(function (info) {
+	// If login was not successful, quit
+	if (! info.user)
+		return;
+
+	// Get the user, including the registered_emails field added by the "splendido:accounts-emails-field"
+	// package. We cannot rely on info.user here, because modifications to the info object are not 
+	// propagated through onLogin callbacks (so info.user.registered_emails might be inexistent or out 
+	// of date)
+	var user = Meteor.users.findOne(info.user._id, { fields: { registered_emails: 1, ... } });
+
+    // Use user.registered_emails here:
+	...
+});
+```
 
 ### WIP
 
