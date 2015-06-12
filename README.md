@@ -112,12 +112,11 @@ Please try the following:
 
 ```Shell
 meteor create test-accounts-emails-field && cd test-accounts-emails-field
-mrt add bootstrap-3
-mrt add accounts-ui-bootstrap-3
+meteor add twbs:bootstrap
+meteor add ian:accounts-ui-bootstrap-3
 meteor add service-configuration
-mrt add accounts-YOUR_PREFERRED_SERVICE
-mrt add accounts-emails-field
-mrt install
+meteor add accounts-YOUR_PREFERRED_SERVICE
+meteor add splendido:accounts-emails-field
 mkdir server
 touch server/accounts.js
 ```
