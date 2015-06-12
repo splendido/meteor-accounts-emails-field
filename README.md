@@ -28,7 +28,7 @@ This should, among other things, permit to check whether a newly registered user
 ### Installation
 
 ```Shell
-mrt add accounts-emails-field
+meteor add splendido:accounts-emails-field
 ```
 
 ### Usage
